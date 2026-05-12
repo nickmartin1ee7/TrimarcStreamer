@@ -60,7 +60,9 @@ checkUpstream();
 setInterval(checkUpstream, HEALTH_CHECK_MS);
 
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  if (req.path !== '/health') {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  }
   next();
 });
 
@@ -320,6 +322,9 @@ async function pollHealth() {
     const resp = await fetch('/health');
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
+    if (!proxyOk) {
+      img.src = img.src.split('?')[0] + '?t=' + Date.now();
+    }
     setProxy(true);
     setOrigin(!!data.upstream.ok);
   } catch (err) {

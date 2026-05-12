@@ -1,6 +1,6 @@
 # TrimarcStreamer
 
-Proxies and streams MJPEG feeds from Trimarc CCTV cameras with a live status bar and ID-based navigation.
+Proxies and streams MJPEG feeds from [Trimarc](https://www.trimarc.org/site/pages/Index.html) CCTV cameras with a live status bar and ID-based navigation.
 
 ## Usage
 

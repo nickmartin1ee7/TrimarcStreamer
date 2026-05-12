@@ -127,20 +127,20 @@ app.get('/stream/:id', async (req, res) => {
 });
 
 // HTML player page
-app.get('/:id', (req, res) => {
-  const { id } = req.params;
-  if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
-    return res.status(400).send('Invalid ID format');
-  }
+function renderPage(id) {
+  const hasId = !!id;
+  const streamUrl = hasId ? '/stream/' + id : '';
+  const title = hasId ? 'TrimarcStreamer - ' + id : 'TrimarcStreamer';
+  const imgHtml = hasId ? '<div id="imageWrap"><img id="streamImg" src="' + streamUrl + '"></div>' : '';
+  const reconnectJs = hasId ? '    if (!proxyOk) {\n      img.src = img.src.split(\'?\')[0] + \'?t=\' + Date.now();\n    }\n  ' : '';
+  const streamJs = hasId ? '\nconst img = document.getElementById(\'streamImg\');\nlet lastFrame = Date.now();\n\nsetInterval(() => {\n  const elapsed = Date.now() - lastFrame;\n  if (clientState === \'green\' && elapsed > 10000) {\n    setClient(\'red\');\n  }\n}, 2000);\n\nimg.addEventListener(\'load\', () => {\n  lastFrame = Date.now();\n  setClient(\'green\');\n});\n\nimg.addEventListener(\'error\', () => {\n  setClient(\'red\');\n});\n\nwindow.addEventListener(\'offline\', () => setClient(\'red\'));\nwindow.addEventListener(\'online\', () => setClient(\'green\'));\n' : '';
 
-  const streamUrl = `/stream/${id}`;
-
-  res.send(`<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TrimarcStreamer - ${id}</title>
+<title>${title}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -162,6 +162,11 @@ app.get('/:id', (req, res) => {
     border-bottom: 1px solid #222;
     font-size: 13px;
     user-select: none;
+    position: relative;
+  }
+  #statusNodes {
+    display: flex;
+    align-items: flex-start;
   }
   .node {
     display: flex;
@@ -182,6 +187,37 @@ app.get('/:id', (req, res) => {
   .node .dot.gray { background: #555; }
   .node .name { color: #aaa; white-space: nowrap; }
   .node .name.highlight { color: #fff; }
+  #loader {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  #loader input {
+    width: 140px;
+    padding: 4px 8px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    background: #1a1a1a;
+    color: #ccc;
+    font-size: 12px;
+    outline: none;
+  }
+  #loader input:focus { border-color: #22c55e; }
+  #loader button {
+    padding: 4px 10px;
+    border: none;
+    border-radius: 4px;
+    background: #22c55e;
+    color: #000;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  #loader button:hover { background: #16a34a; }
   .flow {
     width: 44px;
     height: 4px;
@@ -245,37 +281,39 @@ app.get('/:id', (req, res) => {
 </head>
 <body>
 <div id="statusBar">
-  <div class="node" id="originNode">
-    <span class="dot gray" id="originDot"></span>
-    <span class="name" id="originName">Origin</span>
+  <div id="statusNodes">
+    <div class="node" id="originNode">
+      <span class="dot gray" id="originDot"></span>
+      <span class="name" id="originName">Origin</span>
+    </div>
+    <div class="flow" id="flow1">
+      <div class="track"></div>
+    </div>
+    <div class="node" id="proxyNode">
+      <span class="dot gray" id="proxyDot"></span>
+      <span class="name" id="proxyName">Proxy</span>
+    </div>
+    <div class="flow" id="flow2">
+      <div class="track"></div>
+    </div>
+    <div class="node" id="clientNode">
+      <span class="dot gray" id="clientDot"></span>
+      <span class="name" id="clientName">Client</span>
+    </div>
   </div>
-  <div class="flow" id="flow1">
-    <div class="track"></div>
-  </div>
-  <div class="node" id="proxyNode">
-    <span class="dot gray" id="proxyDot"></span>
-    <span class="name" id="proxyName">Proxy</span>
-  </div>
-  <div class="flow" id="flow2">
-    <div class="track"></div>
-  </div>
-  <div class="node" id="clientNode">
-    <span class="dot gray" id="clientDot"></span>
-    <span class="name" id="clientName">Client</span>
+  <div id="loader">
+    <input type="text" id="idInput" placeholder="CCTV ID" value="${id || ''}" spellcheck="false">
+    <button id="loadBtn">Load</button>
   </div>
 </div>
-<div id="imageWrap">
-  <img id="streamImg" src="${streamUrl}">
-</div>
+${imgHtml}
 <script>
-const img = document.getElementById('streamImg');
 const originDot = document.getElementById('originDot');
 const proxyDot = document.getElementById('proxyDot');
 const clientDot = document.getElementById('clientDot');
 const flow1 = document.getElementById('flow1');
 const flow2 = document.getElementById('flow2');
 
-let lastFrame = Date.now();
 let originOk = false;
 let proxyOk = true;
 let clientState = 'gray';
@@ -322,9 +360,7 @@ async function pollHealth() {
     const resp = await fetch('/health');
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
-    if (!proxyOk) {
-      img.src = img.src.split('?')[0] + '?t=' + Date.now();
-    }
+  ${reconnectJs}
     setProxy(true);
     setOrigin(!!data.upstream.ok);
   } catch (err) {
@@ -334,29 +370,34 @@ async function pollHealth() {
 }
 setInterval(pollHealth, 5000);
 pollHealth();
+${streamJs}
+const idInput = document.getElementById('idInput');
+const loadBtn = document.getElementById('loadBtn');
 
-// Monitor img stream
-setInterval(() => {
-  const elapsed = Date.now() - lastFrame;
-  if (clientState === 'green' && elapsed > 10000) {
-    setClient('red');
+function loadId() {
+  const id = idInput.value.trim();
+  if (id && /^[a-zA-Z0-9_-]+$/.test(id)) {
+    window.location.href = '/' + id;
   }
-}, 2000);
+}
 
-img.addEventListener('load', () => {
-  lastFrame = Date.now();
-  setClient('green');
-});
-
-img.addEventListener('error', () => {
-  setClient('red');
-});
-
-window.addEventListener('offline', () => setClient('red'));
-window.addEventListener('online', () => setClient('green'));
+loadBtn.addEventListener('click', loadId);
+idInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadId(); });
 </script>
 </body>
-</html>`);
+</html>`;
+}
+
+app.get('/', (req, res) => {
+  res.send(renderPage(null));
+});
+
+app.get('/:id', (req, res) => {
+  const { id } = req.params;
+  if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+    return res.status(400).send('Invalid ID format');
+  }
+  res.send(renderPage(id));
 });
 
 app.listen(PORT, () => {

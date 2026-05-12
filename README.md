@@ -20,3 +20,8 @@ node server.js
 ## Screenshots
 
 <img width="1113" height="994" alt="image" src="https://github.com/user-attachments/assets/f1e4ab16-72be-4742-b941-08f8c410a658" />
+
+## Project structure
+
+- `server.js` — Express server, routes, health checks, template rendering
+- `views/index.html` — HTML/CSS/JS page template with `{{PLACEHOLDERS}}`

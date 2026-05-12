@@ -153,9 +153,9 @@ app.get('/:id', (req, res) => {
     width: 100%;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     gap: 0;
-    padding: 8px 16px;
+    padding: 10px 16px;
     background: #111;
     border-bottom: 1px solid #222;
     font-size: 13px;
@@ -163,8 +163,9 @@ app.get('/:id', (req, res) => {
   }
   .node {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 7px;
+    gap: 3px;
     color: #888;
   }
   .node .dot {
@@ -186,7 +187,7 @@ app.get('/:id', (req, res) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 2px;
+    margin: 3px 2px 0;
   }
   .flow .track {
     width: 100%;

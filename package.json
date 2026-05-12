@@ -1,7 +1,7 @@
 {
   "name": "trimarcstreamer",
   "version": "1.0.0",
-  "description": "",
+  "description": "Proxies and streams MJPEG feeds from Trimarc CCTV cameras with a live status bar and ID-based navigation.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

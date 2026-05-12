@@ -140,7 +140,7 @@ app.get('/:id', (req, res) => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>pic2Feed - ${id}</title>
+<title>TrimarcStreamer - ${id}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -360,6 +360,6 @@ window.addEventListener('online', () => setClient('green'));
 });
 
 app.listen(PORT, () => {
-  console.log(`pic2Feed running on http://localhost:${PORT}/:id`);
+  console.log(`TrimarcStreamer running on http://localhost:${PORT}/:id`);
   console.log(`Example: http://localhost:${PORT}/CCTV_05_71_0074`);
 });
